@@ -43,7 +43,7 @@ const RegisterPage = () => {
                     'Content-Type': 'application/json'
                 }
             }
-            await axios.post('http://localhost:5000/api/auth/register', { name, email, password, invitationCode }, config);
+            await axios.post('https://novel-hosting.onrender.com/api/auth/register', { name, email, password, invitationCode }, config);
             // Login after register
             await login({ email, password });
         } catch (err) {

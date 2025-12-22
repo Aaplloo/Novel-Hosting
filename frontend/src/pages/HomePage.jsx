@@ -32,8 +32,8 @@ const FilterButtons = ({ activeFilter, setFilter }) => {
                     key={filter.key}
                     onClick={() => setFilter(filter.key)}
                     className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${activeFilter === filter.key
-                            ? 'bg-white text-sky-500 shadow'
-                            : 'text-slate-600 hover:bg-slate-300/50'
+                        ? 'bg-white text-sky-500 shadow'
+                        : 'text-slate-600 hover:bg-slate-300/50'
                         }`}
                 >
                     {filter.name}
@@ -54,7 +54,7 @@ const HomePage = () => {
     useEffect(() => {
         const fetchNovels = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/api/novels');
+                const res = await axios.get('https://novel-hosting.onrender.com/api/novels');
                 setNovels(res.data);
             } catch (err) {
                 setError('无法加载小说列表。');
@@ -108,7 +108,7 @@ const HomePage = () => {
                         filteredNovels.map((novel) => (
                             <Link to={`/novel/${novel._id}`} key={novel._id} className="group transition-all duration-300 ease-in-out hover:-translate-y-2 hover:shadow-2xl rounded-xl">
                                 <div className="aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-100">
-                                    <img src={novel.coverImage.startsWith('http') ? novel.coverImage : `http://localhost:5000/${novel.coverImage}`} className="w-full h-full object-cover object-center" alt={`${novel.title} 封面`} />
+                                    <img src={novel.coverImage.startsWith('http') ? novel.coverImage : `https://novel-hosting.onrender.com/${novel.coverImage}`} className="w-full h-full object-cover object-center" alt={`${novel.title} 封面`} />
                                 </div>
                                 <div className="mt-2">
                                     <h2 className="text-base font-bold text-slate-900 truncate">{novel.title}</h2>

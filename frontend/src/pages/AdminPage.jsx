@@ -22,7 +22,7 @@ const AdminPage = () => {
 
   const fetchNovels = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/novels');
+      const res = await axios.get('https://novel-hosting.onrender.com/api/novels');
       setNovels(res.data);
     } catch (err) {
       console.error('Failed to fetch novels', err);
@@ -66,7 +66,7 @@ const AdminPage = () => {
           'Content-Type': 'multipart/form-data',
         },
       };
-      const res = await axios.post('http://localhost:5000/api/novels', formData, config);
+      const res = await axios.post('https://novel-hosting.onrender.com/api/novels', formData, config);
       setSuccess(`小说《${res.data.title}》上传成功！`);
       setTitle('');
       setFile(null);
@@ -93,7 +93,7 @@ const AdminPage = () => {
           'Content-Type': 'multipart/form-data',
         },
       };
-      await axios.put(`http://localhost:5000/api/novels/${novelId}/cover`, formData, config);
+      await axios.put(`https://novel-hosting.onrender.com/api/novels/${novelId}/cover`, formData, config);
       alert('封面更新成功');
       fetchNovels();
     } catch (err) {
@@ -104,7 +104,7 @@ const AdminPage = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('确定要删除这本小说吗？')) return;
     try {
-      await axios.delete(`http://localhost:5000/api/novels/${id}`);
+      await axios.delete(`https://novel-hosting.onrender.com/api/novels/${id}`);
       setNovels(novels.filter(n => n._id !== id));
     } catch (err) {
       alert('删除失败');
@@ -191,7 +191,7 @@ const AdminPage = () => {
               {novels.map((novel) => (
                 <div key={novel._id} className="bg-white p-4 rounded-xl shadow-md flex items-start space-x-4">
                   <div className="flex-shrink-0 w-20 h-28 bg-slate-200 rounded overflow-hidden">
-                    <img src={`http://localhost:5000/${novel.coverImage}`} alt={novel.title} className="w-full h-full object-cover" />
+                    <img src={`https://novel-hosting.onrender.com/${novel.coverImage}`} alt={novel.title} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-lg font-medium text-slate-900 truncate">{novel.title}</p>

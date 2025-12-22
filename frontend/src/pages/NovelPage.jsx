@@ -23,11 +23,11 @@ const NovelPage = () => {
 
         const fetchNovel = async () => {
             try {
-                const novelRes = await axios.get(`http://localhost:5000/api/novels/${novelId}`);
+                const novelRes = await axios.get(`https://novel-hosting.onrender.com/api/novels/${novelId}`);
                 setNovel(novelRes.data);
 
                 if (novelRes.data.fileType === 'md') {
-                    const contentRes = await axios.get(`http://localhost:5000/${novelRes.data.filePath}`);
+                    const contentRes = await axios.get(`https://novel-hosting.onrender.com/${novelRes.data.filePath}`);
                     setContent(contentRes.data);
                 }
             } catch (err) {
@@ -51,7 +51,7 @@ const NovelPage = () => {
             return (
                 <div className="w-full h-screen rounded-xl overflow-hidden shadow-lg">
                     <iframe
-                        src={`http://localhost:5000/${novel.filePath}`}
+                        src={`https://novel-hosting.onrender.com/${novel.filePath}`}
                         title={novel.title}
                         className="w-full h-full"
                     ></iframe>
@@ -103,7 +103,7 @@ const NovelPage = () => {
                 <div className="text-center mb-8">
                     {novel.coverImage && (
                         <img
-                            src={`http://localhost:5000/${novel.coverImage}`}
+                            src={`https://novel-hosting.onrender.com/${novel.coverImage}`}
                             alt={novel.title}
                             className="mx-auto h-64 object-cover rounded-lg shadow-lg mb-6"
                         />

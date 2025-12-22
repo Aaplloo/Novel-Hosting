@@ -22,10 +22,10 @@ const authReducer = (state, action) => {
         token: null,
       };
     case 'TOKEN_SET':
-        return {
-            ...state,
-            token: action.payload,
-        }
+      return {
+        ...state,
+        token: action.payload,
+      }
     default:
       return state;
   }
@@ -42,15 +42,15 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (localStorage.token) {
-        setAuthToken(localStorage.token);
-        loadUser();
+      setAuthToken(localStorage.token);
+      loadUser();
     }
   }, []);
 
   // Load User
   const loadUser = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/auth/me');
+      const res = await axios.get('https://novel-hosting.onrender.com/api/auth/me');
       dispatch({ type: 'USER_LOADED', payload: res.data });
     } catch (err) {
       dispatch({ type: 'AUTH_ERROR' });
@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }) => {
       },
     };
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', formData, config);
+      const res = await axios.post('https://novel-hosting.onrender.com/api/auth/login', formData, config);
       const token = res.data.token;
       localStorage.setItem('token', token);
       dispatch({ type: 'TOKEN_SET', payload: token });
