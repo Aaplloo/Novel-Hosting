@@ -9,6 +9,7 @@ const NovelPage = () => {
     const { isAuthenticated, loading: authLoading } = useContext(AuthContext);
     const [novel, setNovel] = useState(null);
     const [content, setContent] = useState('');
+    const [pdfUrl, setPdfUrl] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -29,6 +30,12 @@ const NovelPage = () => {
                 if (novelRes.data.fileType === 'md') {
                     const contentRes = await axios.get(`https://novel-hosting.onrender.com/${novelRes.data.filePath}`);
                     setContent(contentRes.data);
+                } else if (novelRes.data.fileType === 'pdf') {
+                    const pdfRes = await axios.get(`https://novel-hosting.onrender.com/${novelRes.data.filePath}`, {
+                        responseType: 'blob'
+                    });
+                    const url = window.URL.createObjectURL(new Blob([pdfRes.data], { type: 'application/pdf' }));
+                    setPdfUrl(url);
                 }
             } catch (err) {
                 if (err.response && (err.response.status === 401 || err.response.status === 403)) {
@@ -51,7 +58,7 @@ const NovelPage = () => {
             return (
                 <div className="w-full h-screen rounded-xl overflow-hidden shadow-lg">
                     <iframe
-                        src={`https://novel-hosting.onrender.com/${novel.filePath}`}
+                        src={pdfUrl}
                         title={novel.title}
                         className="w-full h-full"
                     ></iframe>
@@ -98,7 +105,7 @@ const NovelPage = () => {
     }
 
     return (
-        <main className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <main className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
             {novel && (
                 <div className="text-center mb-8">
                     {novel.coverImage && (

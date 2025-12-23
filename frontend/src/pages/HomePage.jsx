@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import NovelCard from '../components/NovelCard';
 
 const SearchBar = ({ searchTerm, setSearchTerm }) => (
     <div className="relative w-full max-w-lg">
@@ -106,15 +107,7 @@ const HomePage = () => {
                 {loading ? renderSkeleton() : (
                     filteredNovels.length > 0 ? (
                         filteredNovels.map((novel) => (
-                            <Link to={`/novel/${novel._id}`} key={novel._id} className="group transition-all duration-300 ease-in-out hover:-translate-y-2 hover:shadow-2xl rounded-xl">
-                                <div className="aspect-[2/3] w-full overflow-hidden rounded-xl bg-slate-100">
-                                    <img src={novel.coverImage.startsWith('http') ? novel.coverImage : `https://novel-hosting.onrender.com/${novel.coverImage}`} className="w-full h-full object-cover object-center" alt={`${novel.title} 封面`} />
-                                </div>
-                                <div className="mt-2">
-                                    <h2 className="text-base font-bold text-slate-900 truncate">{novel.title}</h2>
-                                    <p className="text-sm text-slate-500 mt-1">{novel.author.name}</p>
-                                </div>
-                            </Link>
+                            <NovelCard key={novel._id} novel={novel} />
                         ))
                     ) : (
                         <p className="text-slate-500 col-span-full text-center py-10">没有找到符合条件的小说。</p>
