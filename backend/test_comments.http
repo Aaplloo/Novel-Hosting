@@ -1,0 +1,29 @@
+### User Login
+# @name login
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+    "email": "test@example.com",
+    "password": "password123"
+}
+
+### Get Token
+@token = {{login.response.body.token}}
+
+
+### Post Comment
+POST http://localhost:5000/api/comments
+Content-Type: application/json
+x-auth-token: {{token}}
+
+{
+    "novelId": "REPLACE_WITH_VALID_NOVEL_ID",
+    "chapterIndex": 1,
+    "paragraphIndex": 0,
+    "content": "This is a test comment on paragraph 0 of chapter 1."
+}
+
+### Get Comments for Chapter
+GET http://localhost:5000/api/comments?novelId=REPLACE_WITH_VALID_NOVEL_ID&chapterIndex=1
+Content-Type: application/json
