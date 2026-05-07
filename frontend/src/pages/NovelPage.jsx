@@ -64,14 +64,10 @@ const NovelPage = () => {
                 setNovel(novelRes.data);
 
                 if (novelRes.data.fileType === 'md') {
-                    const contentRes = await axios.get(buildAssetUrl(novelRes.data.filePath));
+                    const contentRes = await axios.get(`${API_BASE_URL}/api/novels/${novelId}/content`);
                     setContent(contentRes.data);
                 } else if (novelRes.data.fileType === 'pdf') {
-                    const pdfRes = await axios.get(buildAssetUrl(novelRes.data.filePath), {
-                        responseType: 'blob'
-                    });
-                    const url = window.URL.createObjectURL(new Blob([pdfRes.data], { type: 'application/pdf' }));
-                    setPdfUrl(url);
+                    setPdfUrl(buildAssetUrl(novelRes.data.filePath));
                 }
             } catch (err) {
                 if (err.response && (err.response.status === 401 || err.response.status === 403)) {

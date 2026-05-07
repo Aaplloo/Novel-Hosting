@@ -281,6 +281,50 @@ const getNovelById = async (req, res) => {
   }
 };
 
+// @desc    Get Markdown content for a novel
+// @route   GET /api/novels/:id/content
+// @access  Private
+const getNovelContent = async (req, res) => {
+  try {
+    const novel = await Novel.findById(req.params.id);
+
+    if (!novel) {
+      return res.status(404).json({ msg: 'Novel not found' });
+    }
+
+    if (novel.fileType !== 'md') {
+      return res.status(400).json({ msg: 'Novel is not a Markdown file' });
+    }
+
+    const normalizedPath = toPublicPath(novel.filePath);
+
+    if (/^https?:\/\//i.test(normalizedPath)) {
+      const response = await fetch(normalizedPath);
+
+      if (!response.ok) {
+        return res.status(response.status).json({ msg: 'Novel content not found' });
+      }
+
+      const content = await response.text();
+      res.type('text/markdown').send(content);
+      return;
+    }
+
+    const absolutePath = path.isAbsolute(normalizedPath)
+      ? normalizedPath
+      : path.join(__dirname, '..', normalizedPath);
+
+    if (!fs.existsSync(absolutePath)) {
+      return res.status(404).json({ msg: 'Novel content not found' });
+    }
+
+    res.type('text/markdown').send(fs.readFileSync(absolutePath, 'utf8'));
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server Error');
+  }
+};
+
 // @desc    Delete a novel
 // @route   DELETE /api/novels/:id
 // @access  Private/Admin
@@ -357,6 +401,7 @@ module.exports = {
   uploadNovel,
   getNovels,
   getNovelById,
+  getNovelContent,
   deleteNovel,
   updateNovelCover,
 };

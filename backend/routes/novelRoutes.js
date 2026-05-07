@@ -4,6 +4,7 @@ const {
   uploadNovel,
   getNovels,
   getNovelById,
+  getNovelContent,
   deleteNovel,
 } = require('../controllers/novelController');
 const auth = require('../middleware/auth');
@@ -25,6 +26,11 @@ router.get('/', getNovels);
 // @desc    Get a single novel by ID
 // @access  Private
 router.get('/:id', auth, getNovelById);
+
+// @route   GET /api/novels/:id/content
+// @desc    Get Markdown content for a novel
+// @access  Private
+router.get('/:id/content', auth, getNovelContent);
 
 // @route   DELETE /api/novels/:id
 // @desc    Delete a novel
