@@ -1,6 +1,119 @@
 const Novel = require('../models/Novel');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
+const AdmZip = require('adm-zip');
+
+const UPLOADS_DIR = path.join(__dirname, '..', 'uploads');
+const NOVEL_PACKAGES_DIR = path.join(UPLOADS_DIR, 'novels');
+
+const toPublicPath = (filePath) => filePath.replace(/\\/g, '/');
+
+const removeFileIfExists = (filePath) => {
+  if (!filePath || filePath.includes('via.placeholder.com')) return;
+
+  const absolutePath = path.isAbsolute(filePath)
+    ? filePath
+    : path.join(__dirname, '..', filePath);
+
+  if (fs.existsSync(absolutePath)) {
+    fs.rm(absolutePath, { force: true }, (err) => {
+      if (err) console.error(err);
+    });
+  }
+};
+
+const removeNovelAsset = (filePath) => {
+  if (!filePath) return;
+
+  const normalizedPath = toPublicPath(filePath);
+
+  if (normalizedPath.startsWith('uploads/novels/')) {
+    const parts = normalizedPath.split('/');
+    const packageDir = path.join(UPLOADS_DIR, 'novels', parts[2]);
+
+    fs.rm(packageDir, { recursive: true, force: true }, (err) => {
+      if (err) console.error(err);
+    });
+    return;
+  }
+
+  removeFileIfExists(normalizedPath);
+};
+
+const isSafeZipEntry = (entryName) => {
+  const normalizedName = entryName.replace(/\\/g, '/');
+  return (
+    normalizedName &&
+    !normalizedName.startsWith('/') &&
+    !normalizedName.includes('..') &&
+    !path.isAbsolute(normalizedName)
+  );
+};
+
+const findMarkdownEntry = (entries) => {
+  const markdownFiles = entries
+    .filter((entry) => !entry.isDirectory)
+    .filter((entry) => isSafeZipEntry(entry.entryName))
+    .filter((entry) => !entry.entryName.replace(/\\/g, '/').startsWith('__MACOSX/'))
+    .filter((entry) => path.extname(entry.entryName).toLowerCase() === '.md');
+
+  if (markdownFiles.length === 0) {
+    return null;
+  }
+
+  const rootMarkdown = markdownFiles.find((entry) => {
+    const normalizedName = entry.entryName.replace(/\\/g, '/');
+    return !normalizedName.includes('/');
+  });
+
+  return rootMarkdown || markdownFiles[0];
+};
+
+const extractNovelPackage = (zipFilePath) => {
+  const packageId = crypto.randomUUID();
+  const extractDir = path.join(NOVEL_PACKAGES_DIR, packageId);
+
+  fs.mkdirSync(extractDir, { recursive: true });
+
+  const zip = new AdmZip(zipFilePath);
+  const entries = zip.getEntries();
+  const markdownEntry = findMarkdownEntry(entries);
+
+  if (!markdownEntry) {
+    fs.rmSync(extractDir, { recursive: true, force: true });
+    throw new Error('ZIP 包中必须包含一个 Markdown (.md) 文件。');
+  }
+
+  entries.forEach((entry) => {
+    const normalizedName = entry.entryName.replace(/\\/g, '/');
+
+    if (!isSafeZipEntry(normalizedName) || normalizedName.startsWith('__MACOSX/')) {
+      return;
+    }
+
+    const targetPath = path.resolve(extractDir, normalizedName);
+    if (!targetPath.startsWith(extractDir)) {
+      return;
+    }
+
+    if (entry.isDirectory) {
+      fs.mkdirSync(targetPath, { recursive: true });
+      return;
+    }
+
+    fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+    fs.writeFileSync(targetPath, entry.getData());
+  });
+
+  fs.rmSync(zipFilePath, { force: true });
+
+  const markdownPath = path
+    .join('uploads', 'novels', packageId, markdownEntry.entryName.replace(/\\/g, '/'))
+    .replace(/\\/g, '/');
+
+  return markdownPath;
+};
 
 // @desc    Upload a novel
 // @route   POST /api/novels
@@ -9,12 +122,18 @@ const uploadNovel = async (req, res) => {
   try {
     const { title } = req.body;
     const file = req.files['file'][0];
-    const filePath = file.path;
-    const fileType = path.extname(file.originalname).substring(1);
+    const uploadedFileType = path.extname(file.originalname).substring(1).toLowerCase();
+    let filePath = toPublicPath(file.path);
+    let fileType = uploadedFileType;
+
+    if (uploadedFileType === 'zip') {
+      filePath = extractNovelPackage(file.path);
+      fileType = 'md';
+    }
 
     let coverImage = 'https://via.placeholder.com/150x220.png?text=No+Cover';
     if (req.files['coverImage']) {
-      coverImage = req.files['coverImage'][0].path.replace(/\\/g, '/');
+      coverImage = toPublicPath(req.files['coverImage'][0].path);
     }
 
     const newNovel = new Novel({
@@ -29,7 +148,7 @@ const uploadNovel = async (req, res) => {
     res.json(novel);
   } catch (err) {
     console.error(err.message);
-    res.status(500).send('Server Error');
+    res.status(400).json({ msg: err.message || 'Upload failed' });
   }
 };
 
@@ -81,12 +200,8 @@ const deleteNovel = async (req, res) => {
       return res.status(401).json({ msg: 'User not authorized' });
     }
 
-    // Delete file from server
-    fs.unlink(novel.filePath, (err) => {
-      if (err) {
-        console.error(err);
-      }
-    });
+    removeNovelAsset(novel.filePath);
+    removeFileIfExists(novel.coverImage);
 
     await Novel.deleteOne({ _id: req.params.id });
 
@@ -122,15 +237,10 @@ const updateNovelCover = async (req, res) => {
 
     // Delete old cover if it's not the placeholder and exists
     if (novel.coverImage && !novel.coverImage.includes('via.placeholder.com')) {
-      const oldCoverPath = path.join(__dirname, '..', novel.coverImage);
-      if (fs.existsSync(oldCoverPath)) {
-        fs.unlink(oldCoverPath, (err) => {
-          if (err) console.error(err);
-        });
-      }
+      removeFileIfExists(novel.coverImage);
     }
 
-    novel.coverImage = req.file.path.replace(/\\/g, '/');
+    novel.coverImage = toPublicPath(req.file.path);
     await novel.save();
 
     res.json(novel);

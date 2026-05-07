@@ -5,6 +5,24 @@ import ReactMarkdown from 'react-markdown';
 import AuthContext from '../context/AuthContext';
 import CommentSidebar from '../components/CommentSidebar';
 
+const API_BASE_URL = 'https://novel-hosting.onrender.com';
+
+const normalizePath = (value = '') => value.replace(/\\/g, '/');
+
+const buildAssetUrl = (assetPath = '') => {
+    if (/^(https?:|data:|blob:)/i.test(assetPath)) {
+        return assetPath;
+    }
+
+    return `${API_BASE_URL}/${normalizePath(assetPath).replace(/^\/+/, '')}`;
+};
+
+const getDirectoryPath = (filePath = '') => {
+    const normalizedPath = normalizePath(filePath);
+    const slashIndex = normalizedPath.lastIndexOf('/');
+    return slashIndex === -1 ? '' : normalizedPath.slice(0, slashIndex + 1);
+};
+
 const NovelPage = () => {
     const { novelId } = useParams();
     const { isAuthenticated, user, loading: authLoading } = useContext(AuthContext);
@@ -32,14 +50,14 @@ const NovelPage = () => {
 
         const fetchNovel = async () => {
             try {
-                const novelRes = await axios.get(`https://novel-hosting.onrender.com/api/novels/${novelId}`);
+                const novelRes = await axios.get(`${API_BASE_URL}/api/novels/${novelId}`);
                 setNovel(novelRes.data);
 
                 if (novelRes.data.fileType === 'md') {
-                    const contentRes = await axios.get(`https://novel-hosting.onrender.com/${novelRes.data.filePath}`);
+                    const contentRes = await axios.get(buildAssetUrl(novelRes.data.filePath));
                     setContent(contentRes.data);
                 } else if (novelRes.data.fileType === 'pdf') {
-                    const pdfRes = await axios.get(`https://novel-hosting.onrender.com/${novelRes.data.filePath}`, {
+                    const pdfRes = await axios.get(buildAssetUrl(novelRes.data.filePath), {
                         responseType: 'blob'
                     });
                     const url = window.URL.createObjectURL(new Blob([pdfRes.data], { type: 'application/pdf' }));
@@ -60,7 +78,7 @@ const NovelPage = () => {
             // Assuming chapterIndex is 1 for now (MVP). In real app, we need chapter support.
             // Using chapterIndex=1 as default
             try {
-                const res = await axios.get(`https://novel-hosting.onrender.com/api/comments?novelId=${novelId}&chapterIndex=1`);
+                const res = await axios.get(`${API_BASE_URL}/api/comments?novelId=${novelId}&chapterIndex=1`);
                 setComments(res.data);
             } catch (err) {
                 console.error("Failed to fetch comments", err);
@@ -110,7 +128,7 @@ const NovelPage = () => {
                 content: newComment
             };
 
-            const res = await axios.post('https://novel-hosting.onrender.com/api/comments', body, config);
+            const res = await axios.post(`${API_BASE_URL}/api/comments`, body, config);
 
             // Optimistically update comments
             setComments([res.data, ...comments]);
@@ -137,6 +155,31 @@ const NovelPage = () => {
         }
 
         if (novel.fileType === 'md') {
+            const markdownDirectory = getDirectoryPath(novel.filePath);
+            const resolveMarkdownImage = (src = '') => {
+                if (/^(https?:|data:|blob:)/i.test(src)) {
+                    return src;
+                }
+
+                if (src.startsWith('/')) {
+                    return `${API_BASE_URL}${src}`;
+                }
+
+                return new URL(normalizePath(src), buildAssetUrl(markdownDirectory)).href;
+            };
+            const markdownComponents = {
+                p: 'span',
+                img: ({ src, alt }) => (
+                    <img
+                        src={resolveMarkdownImage(src)}
+                        alt={alt || ''}
+                        className="mx-auto my-6 max-h-[70vh] border-[3px] border-pencil bg-white object-contain p-2 shadow-sketch"
+                        style={{ borderRadius: '30px 12px 28px 14px / 14px 30px 12px 28px' }}
+                        loading="lazy"
+                    />
+                ),
+            };
+
             return (
                 <article className="prose prose-lg max-w-none border-[3px] border-pencil bg-white p-6 shadow-sketch prose-headings:font-marker prose-headings:text-pencil prose-p:text-pencil prose-strong:text-pencil sm:p-10 lg:prose-xl" style={{ borderRadius: '42px 16px 38px 18px / 18px 40px 16px 36px' }}>
                     {paragraphs.map((paragraph, index) => {
@@ -150,7 +193,7 @@ const NovelPage = () => {
                                 style={{ borderRadius: '18px 10px 16px 12px / 12px 18px 10px 16px' }}
                                 onClick={() => handleParagraphClick(index)}
                             >
-                                <ReactMarkdown components={{ p: 'span' }}>{paragraph}</ReactMarkdown>
+                                <ReactMarkdown components={markdownComponents}>{paragraph}</ReactMarkdown>
 
                                 <div className="absolute right-0 top-1/2 hidden -translate-y-1/2 translate-x-full items-center pl-2 opacity-0 transition-opacity group-hover:opacity-100 md:flex">
                                     <button
@@ -216,7 +259,7 @@ const NovelPage = () => {
                     {novel.coverImage && (
                         <div className="mx-auto mb-6 w-fit rotate-1 border-[3px] border-pencil bg-white p-2 shadow-sketch">
                             <img
-                                src={`https://novel-hosting.onrender.com/${novel.coverImage}`}
+                                src={buildAssetUrl(novel.coverImage)}
                                 alt={novel.title}
                                 className="h-64 object-cover"
                                 style={{ borderRadius: '24px 10px 20px 12px / 12px 24px 10px 20px' }}

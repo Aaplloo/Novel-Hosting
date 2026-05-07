@@ -9,7 +9,7 @@ const AdminPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const [fileName, setFileName] = useState('选择文件 (.md, .pdf)');
+  const [fileName, setFileName] = useState('选择文件 (.md, .pdf, .zip)');
   const [coverName, setCoverName] = useState('选择封面 (.jpg, .png)');
 
   // List State
@@ -34,7 +34,7 @@ const AdminPage = () => {
   const onFileChange = (e) => {
     const selectedFile = e.target.files[0];
     setFile(selectedFile);
-    setFileName(selectedFile ? selectedFile.name : '选择文件 (.md, .pdf)');
+    setFileName(selectedFile ? selectedFile.name : '选择文件 (.md, .pdf, .zip)');
   };
 
   const onCoverChange = (e) => {
@@ -71,7 +71,7 @@ const AdminPage = () => {
       setTitle('');
       setFile(null);
       setCoverImage(null);
-      setFileName('选择文件 (.md, .pdf)');
+      setFileName('选择文件 (.md, .pdf, .zip)');
       setCoverName('选择封面 (.jpg, .png)');
       fetchNovels(); // Refresh list
     } catch (err) {
@@ -151,7 +151,7 @@ const AdminPage = () => {
                     <div className="text-lg text-pencil/70">
                       <label htmlFor="file-upload" className="sketch-link relative cursor-pointer bg-white px-2 font-bold">
                         <span>{fileName}</span>
-                        <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={onFileChange} accept=".md,.pdf" />
+                        <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={onFileChange} accept=".md,.pdf,.zip" />
                       </label>
                     </div>
                   </div>

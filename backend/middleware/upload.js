@@ -16,7 +16,7 @@ const fileFilter = (req, file, cb) => {
   if (file.fieldname === 'coverImage') {
     allowedTypes = /jpeg|jpg|png|gif/;
   } else {
-    allowedTypes = /md|pdf/;
+    allowedTypes = /md|pdf|zip/;
   }
 
   const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
@@ -31,7 +31,7 @@ const fileFilter = (req, file, cb) => {
 // Init upload
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 10000000 }, // 10MB limit
+  limits: { fileSize: 50000000 }, // 50MB limit for Markdown packages with images
   fileFilter: fileFilter,
 });
 
