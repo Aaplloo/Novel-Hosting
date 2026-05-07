@@ -3,6 +3,13 @@ import axios from 'axios';
 import AuthContext from '../context/AuthContext';
 
 const API_BASE_URL = 'https://novel-hosting.onrender.com';
+const buildAssetUrl = (assetPath = '') => {
+  if (/^(https?:|data:|blob:)/i.test(assetPath)) {
+    return assetPath;
+  }
+
+  return `${API_BASE_URL}/${assetPath.replace(/\\/g, '/').replace(/^\/+/, '')}`;
+};
 
 const AdminPage = () => {
   const { user } = useContext(AuthContext);
@@ -277,7 +284,7 @@ const AdminPage = () => {
               {novels.map((novel) => (
                 <div key={novel._id} className="sketch-card flex items-start gap-4 p-4 odd:-rotate-1 even:rotate-1">
                   <div className="h-28 w-20 flex-shrink-0 overflow-hidden border-2 border-pencil bg-erased" style={{ borderRadius: '18px 8px 16px 10px / 10px 18px 8px 16px' }}>
-                    <img src={`${API_BASE_URL}/${novel.coverImage}`} alt={novel.title} className="w-full h-full object-cover" />
+                    <img src={buildAssetUrl(novel.coverImage)} alt={novel.title} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="truncate font-marker text-2xl font-bold text-pencil">{novel.title}</p>

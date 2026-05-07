@@ -3,14 +3,28 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const AdmZip = require('adm-zip');
+const {
+  deleteByUrl,
+  deletePrefix,
+  getContentType,
+  getKeyFromPublicUrl,
+  isSpacesEnabled,
+  uploadBuffer,
+  uploadFile,
+} = require('../services/spacesStorage');
 
 const UPLOADS_DIR = path.join(__dirname, '..', 'uploads');
 const NOVEL_PACKAGES_DIR = path.join(UPLOADS_DIR, 'novels');
 
 const toPublicPath = (filePath) => filePath.replace(/\\/g, '/');
 
-const removeFileIfExists = (filePath) => {
+const removeFileIfExists = async (filePath) => {
   if (!filePath || filePath.includes('via.placeholder.com')) return;
+
+  if (/^https?:\/\//i.test(filePath)) {
+    await deleteByUrl(filePath);
+    return;
+  }
 
   const absolutePath = path.isAbsolute(filePath)
     ? filePath
@@ -23,10 +37,22 @@ const removeFileIfExists = (filePath) => {
   }
 };
 
-const removeNovelAsset = (filePath) => {
+const removeNovelAsset = async (filePath) => {
   if (!filePath) return;
 
   const normalizedPath = toPublicPath(filePath);
+
+  if (/^https?:\/\//i.test(normalizedPath)) {
+    const key = getKeyFromPublicUrl(normalizedPath);
+
+    if (key.startsWith('novels/') && key.split('/').length >= 3) {
+      await deletePrefix(key.split('/').slice(0, 2).join('/'));
+      return;
+    }
+
+    await deleteByUrl(normalizedPath);
+    return;
+  }
 
   if (normalizedPath.startsWith('uploads/novels/')) {
     const parts = normalizedPath.split('/');
@@ -68,6 +94,45 @@ const findMarkdownEntry = (entries) => {
   });
 
   return rootMarkdown || markdownFiles[0];
+};
+
+const uploadNovelPackageToSpaces = async (zipFilePath) => {
+  const packageId = crypto.randomUUID();
+  const zip = new AdmZip(zipFilePath);
+  const entries = zip.getEntries();
+  const markdownEntry = findMarkdownEntry(entries);
+
+  if (!markdownEntry) {
+    throw new Error('ZIP 包中必须包含一个 Markdown (.md) 文件。');
+  }
+
+  let markdownUrl = '';
+
+  for (const entry of entries) {
+    const normalizedName = entry.entryName.replace(/\\/g, '/');
+
+    if (
+      entry.isDirectory ||
+      !isSafeZipEntry(normalizedName) ||
+      normalizedName.startsWith('__MACOSX/')
+    ) {
+      continue;
+    }
+
+    const uploadedUrl = await uploadBuffer({
+      key: `novels/${packageId}/${normalizedName}`,
+      body: entry.getData(),
+      contentType: getContentType(normalizedName),
+    });
+
+    if (normalizedName === markdownEntry.entryName.replace(/\\/g, '/')) {
+      markdownUrl = uploadedUrl;
+    }
+  }
+
+  fs.rmSync(zipFilePath, { force: true });
+
+  return markdownUrl;
 };
 
 const extractNovelPackage = (zipFilePath) => {
@@ -115,6 +180,31 @@ const extractNovelPackage = (zipFilePath) => {
   return markdownPath;
 };
 
+const uploadSingleNovelFileToSpaces = async (file, uploadedFileType) => {
+  const fileId = crypto.randomUUID();
+  const fileName = `${fileId}${path.extname(file.originalname).toLowerCase()}`;
+  const folder = uploadedFileType === 'pdf' ? 'pdfs' : 'novels';
+  const url = await uploadFile({
+    key: `${folder}/${fileName}`,
+    filePath: file.path,
+  });
+
+  fs.rmSync(file.path, { force: true });
+  return url;
+};
+
+const uploadCoverToSpaces = async (file) => {
+  const coverId = crypto.randomUUID();
+  const fileName = `${coverId}${path.extname(file.originalname).toLowerCase()}`;
+  const url = await uploadFile({
+    key: `covers/${fileName}`,
+    filePath: file.path,
+  });
+
+  fs.rmSync(file.path, { force: true });
+  return url;
+};
+
 // @desc    Upload a novel
 // @route   POST /api/novels
 // @access  Private/Admin
@@ -126,14 +216,21 @@ const uploadNovel = async (req, res) => {
     let filePath = toPublicPath(file.path);
     let fileType = uploadedFileType;
 
-    if (uploadedFileType === 'zip') {
+    if (isSpacesEnabled() && uploadedFileType === 'zip') {
+      filePath = await uploadNovelPackageToSpaces(file.path);
+      fileType = 'md';
+    } else if (uploadedFileType === 'zip') {
       filePath = extractNovelPackage(file.path);
       fileType = 'md';
+    } else if (isSpacesEnabled()) {
+      filePath = await uploadSingleNovelFileToSpaces(file, uploadedFileType);
     }
 
     let coverImage = 'https://via.placeholder.com/150x220.png?text=No+Cover';
     if (req.files['coverImage']) {
-      coverImage = toPublicPath(req.files['coverImage'][0].path);
+      coverImage = isSpacesEnabled()
+        ? await uploadCoverToSpaces(req.files['coverImage'][0])
+        : toPublicPath(req.files['coverImage'][0].path);
     }
 
     const newNovel = new Novel({
@@ -200,8 +297,8 @@ const deleteNovel = async (req, res) => {
       return res.status(401).json({ msg: 'User not authorized' });
     }
 
-    removeNovelAsset(novel.filePath);
-    removeFileIfExists(novel.coverImage);
+    await removeNovelAsset(novel.filePath);
+    await removeFileIfExists(novel.coverImage);
 
     await Novel.deleteOne({ _id: req.params.id });
 
@@ -237,10 +334,12 @@ const updateNovelCover = async (req, res) => {
 
     // Delete old cover if it's not the placeholder and exists
     if (novel.coverImage && !novel.coverImage.includes('via.placeholder.com')) {
-      removeFileIfExists(novel.coverImage);
+      await removeFileIfExists(novel.coverImage);
     }
 
-    novel.coverImage = toPublicPath(req.file.path);
+    novel.coverImage = isSpacesEnabled()
+      ? await uploadCoverToSpaces(req.file)
+      : toPublicPath(req.file.path);
     await novel.save();
 
     res.json(novel);
