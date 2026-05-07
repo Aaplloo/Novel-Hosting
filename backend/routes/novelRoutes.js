@@ -8,12 +8,13 @@ const {
 } = require('../controllers/novelController');
 const auth = require('../middleware/auth');
 const admin = require('../middleware/admin');
+const uploadPermission = require('../middleware/uploadPermission');
 const upload = require('../middleware/upload');
 
 // @route   POST /api/novels
 // @desc    Upload a novel
 // @access  Private/Admin
-router.post('/', [auth, admin, upload.fields([{ name: 'file', maxCount: 1 }, { name: 'coverImage', maxCount: 1 }])], uploadNovel);
+router.post('/', [auth, uploadPermission, upload.fields([{ name: 'file', maxCount: 1 }, { name: 'coverImage', maxCount: 1 }])], uploadNovel);
 
 // @route   GET /api/novels
 // @desc    Get all novels

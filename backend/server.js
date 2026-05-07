@@ -21,6 +21,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/novels', require('./routes/novelRoutes'));
 app.use('/api/comments', require('./routes/commentRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
 
 // Serve static assets in production
 app.use('/uploads', express.static('uploads'));

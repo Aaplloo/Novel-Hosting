@@ -4,8 +4,8 @@ module.exports = async function (req, res, next) {
   try {
     const user = await User.findById(req.user.id);
 
-    if (!user || !user.isAdmin) {
-      return res.status(403).json({ msg: 'Admin resource. Access denied.' });
+    if (!user || (!user.isAdmin && !user.canUpload)) {
+      return res.status(403).json({ msg: 'Upload permission required.' });
     }
 
     req.user.isAdmin = user.isAdmin;

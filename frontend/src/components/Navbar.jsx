@@ -17,7 +17,7 @@ const Navbar = () => {
       <li className="hidden text-pencil/80 lg:block">
         欢迎, {user?.name}
       </li>
-      {user?.isAdmin && (
+      {(user?.isAdmin || user?.canUpload) && (
         <li>
           <Link className="sketch-link" to="/admin">管理后台</Link>
         </li>

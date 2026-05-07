@@ -14,7 +14,8 @@ const registerUser = async (req, res) => {
     }
 
     // Check invitation code
-    const code = await InvitationCode.findOne({ code: invitationCode });
+    const normalizedInvitationCode = (invitationCode || '').trim().toUpperCase();
+    const code = await InvitationCode.findOne({ code: normalizedInvitationCode });
     if (!code || code.used) {
       return res.status(400).json({ msg: 'Invalid or used invitation code' });
     }
@@ -65,7 +66,8 @@ const loginUser = async (req, res) => {
       user: {
         id: user.id,
         name: user.name,
-        isAdmin: user.isAdmin
+        isAdmin: user.isAdmin,
+        canUpload: user.canUpload,
       },
     };
 

@@ -1,7 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import AuthContext from '../context/AuthContext';
+
+const API_BASE_URL = 'https://novel-hosting.onrender.com';
 
 const AdminPage = () => {
+  const { user } = useContext(AuthContext);
+  const canUploadNovel = Boolean(user?.isAdmin || user?.canUpload);
+  const canManageSite = Boolean(user?.isAdmin);
+
   // Upload State
   const [title, setTitle] = useState('');
   const [file, setFile] = useState(null);
@@ -15,14 +22,26 @@ const AdminPage = () => {
   // List State
   const [novels, setNovels] = useState([]);
   const [listLoading, setListLoading] = useState(true);
+  const [users, setUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [invitationCodes, setInvitationCodes] = useState([]);
+  const [codesLoading, setCodesLoading] = useState(false);
+  const [newInvitationCode, setNewInvitationCode] = useState('');
 
   useEffect(() => {
     fetchNovels();
   }, []);
 
+  useEffect(() => {
+    if (canManageSite) {
+      fetchUsers();
+      fetchInvitationCodes();
+    }
+  }, [canManageSite]);
+
   const fetchNovels = async () => {
     try {
-      const res = await axios.get('https://novel-hosting.onrender.com/api/novels');
+      const res = await axios.get(`${API_BASE_URL}/api/novels`);
       setNovels(res.data);
     } catch (err) {
       console.error('Failed to fetch novels', err);
@@ -45,6 +64,11 @@ const AdminPage = () => {
 
   const onSubmit = async (e) => {
     e.preventDefault();
+    if (!canUploadNovel) {
+      setError('您没有上传权限。');
+      return;
+    }
+
     if (!file) {
       setError('请选择一个文件进行上传。');
       return;
@@ -66,7 +90,7 @@ const AdminPage = () => {
           'Content-Type': 'multipart/form-data',
         },
       };
-      const res = await axios.post('https://novel-hosting.onrender.com/api/novels', formData, config);
+      const res = await axios.post(`${API_BASE_URL}/api/novels`, formData, config);
       setSuccess(`小说《${res.data.title}》上传成功！`);
       setTitle('');
       setFile(null);
@@ -93,7 +117,7 @@ const AdminPage = () => {
           'Content-Type': 'multipart/form-data',
         },
       };
-      await axios.put(`https://novel-hosting.onrender.com/api/novels/${novelId}/cover`, formData, config);
+      await axios.put(`${API_BASE_URL}/api/novels/${novelId}/cover`, formData, config);
       alert('封面更新成功');
       fetchNovels();
     } catch (err) {
@@ -104,12 +128,70 @@ const AdminPage = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('确定要删除这本小说吗？')) return;
     try {
-      await axios.delete(`https://novel-hosting.onrender.com/api/novels/${id}`);
+      await axios.delete(`${API_BASE_URL}/api/novels/${id}`);
       setNovels(novels.filter(n => n._id !== id));
     } catch (err) {
       alert('删除失败');
     }
-  }
+  };
+
+  const fetchUsers = async () => {
+    setUsersLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/admin/users`);
+      setUsers(res.data);
+    } catch (err) {
+      console.error('Failed to fetch users', err);
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  const fetchInvitationCodes = async () => {
+    setCodesLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/admin/invitation-codes`);
+      setInvitationCodes(res.data);
+    } catch (err) {
+      console.error('Failed to fetch invitation codes', err);
+    } finally {
+      setCodesLoading(false);
+    }
+  };
+
+  const handleCreateInvitationCode = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post(`${API_BASE_URL}/api/admin/invitation-codes`, {
+        code: newInvitationCode.trim(),
+      });
+      setNewInvitationCode('');
+      fetchInvitationCodes();
+    } catch (err) {
+      alert(err.response?.data?.msg || '邀请码创建失败');
+    }
+  };
+
+  const handleDeleteInvitationCode = async (id) => {
+    if (!window.confirm('确定要删除这个邀请码吗？')) return;
+    try {
+      await axios.delete(`${API_BASE_URL}/api/admin/invitation-codes/${id}`);
+      setInvitationCodes(invitationCodes.filter(code => code._id !== id));
+    } catch (err) {
+      alert(err.response?.data?.msg || '邀请码删除失败');
+    }
+  };
+
+  const handleToggleUploadPermission = async (member) => {
+    try {
+      const res = await axios.patch(`${API_BASE_URL}/api/admin/users/${member._id}/permissions`, {
+        canUpload: !member.canUpload,
+      });
+      setUsers(users.map(item => item._id === member._id ? res.data : item));
+    } catch (err) {
+      alert(err.response?.data?.msg || '权限更新失败');
+    }
+  };
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
@@ -126,6 +208,7 @@ const AdminPage = () => {
           <form className="sketch-panel space-y-6 bg-white p-6 md:p-8" onSubmit={onSubmit}>
             {error && <div className="border-[3px] border-correction bg-white px-4 py-3 text-center text-lg text-correction shadow-sketchSm" style={{ borderRadius: '18px 10px 16px 12px / 12px 18px 10px 16px' }}>{error}</div>}
             {success && <div className="border-[3px] border-ballpoint bg-postit px-4 py-3 text-center text-lg text-pencil shadow-sketchSm" style={{ borderRadius: '18px 10px 16px 12px / 12px 18px 10px 16px' }}>{success}</div>}
+            {!canUploadNovel && <div className="border-[3px] border-correction bg-white px-4 py-3 text-center text-lg text-correction shadow-sketchSm" style={{ borderRadius: '18px 10px 16px 12px / 12px 18px 10px 16px' }}>当前账号没有上传权限。</div>}
 
             <div className="space-y-4">
               <div>
@@ -175,7 +258,7 @@ const AdminPage = () => {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !canUploadNovel}
               className="sketch-button w-full"
             >
               {loading ? '正在上传...' : '确认上传'}
@@ -183,7 +266,7 @@ const AdminPage = () => {
           </form>
         </div>
 
-        <div>
+        {canManageSite && <div>
           <h2 className="mb-8 text-4xl">
             现有小说管理
           </h2>
@@ -194,7 +277,7 @@ const AdminPage = () => {
               {novels.map((novel) => (
                 <div key={novel._id} className="sketch-card flex items-start gap-4 p-4 odd:-rotate-1 even:rotate-1">
                   <div className="h-28 w-20 flex-shrink-0 overflow-hidden border-2 border-pencil bg-erased" style={{ borderRadius: '18px 8px 16px 10px / 10px 18px 8px 16px' }}>
-                    <img src={`https://novel-hosting.onrender.com/${novel.coverImage}`} alt={novel.title} className="w-full h-full object-cover" />
+                    <img src={`${API_BASE_URL}/${novel.coverImage}`} alt={novel.title} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="truncate font-marker text-2xl font-bold text-pencil">{novel.title}</p>
@@ -220,8 +303,78 @@ const AdminPage = () => {
               {novels.length === 0 && <p className="text-2xl text-pencil/70">暂无小说。</p>}
             </div>
           )}
-        </div>
+        </div>}
       </div>
+
+      {canManageSite && (
+        <div className="mt-14 grid grid-cols-1 gap-12 lg:grid-cols-2">
+          <section>
+            <h2 className="mb-8 text-4xl">邀请码管理</h2>
+            <div className="sketch-panel bg-white p-6 md:p-8">
+              <form className="mb-6 flex flex-col gap-3 sm:flex-row" onSubmit={handleCreateInvitationCode}>
+                <input
+                  className="sketch-input"
+                  value={newInvitationCode}
+                  onChange={(e) => setNewInvitationCode(e.target.value)}
+                  placeholder="留空自动生成"
+                />
+                <button className="sketch-button shrink-0" type="submit">创建</button>
+              </form>
+
+              {codesLoading ? (
+                <p className="text-2xl text-pencil/70">加载中...</p>
+              ) : (
+                <div className="space-y-3">
+                  {invitationCodes.map((item) => (
+                    <div key={item._id} className="flex flex-wrap items-center justify-between gap-3 border-2 border-pencil bg-paper/70 px-4 py-3" style={{ borderRadius: '18px 10px 16px 12px / 12px 18px 10px 16px' }}>
+                      <div>
+                        <p className="font-marker text-2xl font-bold text-pencil">{item.code}</p>
+                        <p className="text-lg text-pencil/70">{item.used ? '已使用' : '未使用'}</p>
+                      </div>
+                      <button className="text-lg font-bold text-correction hover:line-through" onClick={() => handleDeleteInvitationCode(item._id)}>
+                        删除
+                      </button>
+                    </div>
+                  ))}
+                  {invitationCodes.length === 0 && <p className="text-2xl text-pencil/70">暂无邀请码。</p>}
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section>
+            <h2 className="mb-8 text-4xl">成员权限</h2>
+            <div className="sketch-panel bg-white p-6 md:p-8">
+              {usersLoading ? (
+                <p className="text-2xl text-pencil/70">加载中...</p>
+              ) : (
+                <div className="space-y-3">
+                  {users.map((member) => (
+                    <div key={member._id} className="flex flex-wrap items-center justify-between gap-4 border-2 border-pencil bg-paper/70 px-4 py-3" style={{ borderRadius: '18px 10px 16px 12px / 12px 18px 10px 16px' }}>
+                      <div className="min-w-0">
+                        <p className="truncate font-marker text-2xl font-bold text-pencil">{member.name}</p>
+                        <p className="truncate text-lg text-pencil/70">{member.email}</p>
+                        <p className="text-base text-pencil/60">{member.isAdmin ? '管理员' : '普通成员'}</p>
+                      </div>
+                      <label className="flex cursor-pointer items-center gap-3 text-lg font-bold text-pencil">
+                        <input
+                          type="checkbox"
+                          className="h-5 w-5 accent-[#2d5da1]"
+                          checked={Boolean(member.canUpload || member.isAdmin)}
+                          disabled={member.isAdmin}
+                          onChange={() => handleToggleUploadPermission(member)}
+                        />
+                        可上传文章
+                      </label>
+                    </div>
+                  ))}
+                  {users.length === 0 && <p className="text-2xl text-pencil/70">暂无成员。</p>}
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 };
