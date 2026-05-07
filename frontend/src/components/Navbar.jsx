@@ -14,16 +14,16 @@ const Navbar = () => {
 
   const authLinks = (
     <>
-      <li className="text-slate-700">
+      <li className="hidden text-pencil/80 lg:block">
         欢迎, {user?.name}
       </li>
       {user?.isAdmin && (
         <li>
-          <Link className="hover:text-sky-500 transition-colors" to="/admin">管理后台</Link>
+          <Link className="sketch-link" to="/admin">管理后台</Link>
         </li>
       )}
       <li>
-        <a onClick={onLogout} href="#!" className="hover:text-sky-500 transition-colors cursor-pointer">
+        <a onClick={onLogout} href="#!" className="sketch-link cursor-pointer">
           退出登录
         </a>
       </li>
@@ -33,10 +33,10 @@ const Navbar = () => {
   const guestLinks = (
     <>
       <li>
-        <Link className="hover:text-sky-500 transition-colors" to="/login">登录</Link>
+        <Link className="sketch-link" to="/login">登录</Link>
       </li>
       <li>
-        <Link to="/register" className="bg-gradient-to-r from-sky-400 to-blue-400 text-white px-4 py-2 rounded-lg shadow-md hover:opacity-90 transition-opacity">
+        <Link to="/register" className="sketch-button min-h-0 px-4 py-1 text-base">
           注册
         </Link>
       </li>
@@ -44,24 +44,23 @@ const Navbar = () => {
   );
 
   return (
-    <header className="sticky top-0 z-50">
-      <nav className="w-full bg-white/70 backdrop-blur-lg border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+    <header className="sticky top-0 z-50 px-3 pt-3">
+      <nav className="mx-auto w-full max-w-5xl border-[3px] border-pencil bg-white/90 shadow-sketch backdrop-blur-sm" style={{ borderRadius: '30px 12px 28px 14px / 14px 30px 12px 28px' }}>
+        <div className="px-4 sm:px-6">
+          <div className="flex min-h-16 items-center justify-between gap-4 py-3">
             <div className="flex-shrink-0">
               <Link to="/">
                 <Logo />
               </Link>
             </div>
-            <div className="hidden md:block">
-              <ul className="ml-10 flex items-center space-x-8 font-medium">
+            <div className="block">
+              <ul className="flex flex-wrap items-center justify-end gap-x-5 gap-y-3 text-lg font-bold">
                 <li>
-                  <Link className="hover:text-sky-500 transition-colors" to="/">首页</Link>
+                  <Link className="sketch-link" to="/">首页</Link>
                 </li>
                 {isAuthenticated ? authLinks : guestLinks}
               </ul>
             </div>
-            {/* Mobile menu button can be added here if needed */}
           </div>
         </div>
       </nav>

@@ -4,9 +4,9 @@ import { Link } from 'react-router-dom';
 import NovelCard from '../components/NovelCard';
 
 const SearchBar = ({ searchTerm, setSearchTerm }) => (
-    <div className="relative w-full max-w-lg">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg className="h-5 w-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <div className="relative w-full max-w-lg -rotate-1">
+        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+            <svg className="h-6 w-6 text-pencil" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                 <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" />
             </svg>
         </div>
@@ -15,7 +15,7 @@ const SearchBar = ({ searchTerm, setSearchTerm }) => (
             placeholder="搜索书名或作者..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg leading-5 bg-white placeholder-slate-500 focus:outline-none focus:placeholder-slate-400 focus:ring-1 focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
+            className="sketch-input pl-12"
         />
     </div>
 );
@@ -27,15 +27,16 @@ const FilterButtons = ({ activeFilter, setFilter }) => {
         { key: 'pdf', name: 'PDF' },
     ];
     return (
-        <div className="flex items-center space-x-2 bg-slate-200 p-1 rounded-lg">
+        <div className="flex rotate-1 items-center gap-2 border-[3px] border-pencil bg-erased p-1 shadow-sketchSm" style={{ borderRadius: '24px 10px 20px 12px / 12px 24px 10px 20px' }}>
             {filters.map(filter => (
                 <button
                     key={filter.key}
                     onClick={() => setFilter(filter.key)}
-                    className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${activeFilter === filter.key
-                        ? 'bg-white text-sky-500 shadow'
-                        : 'text-slate-600 hover:bg-slate-300/50'
+                    className={`min-h-10 px-4 py-1 text-lg font-bold transition-all duration-100 ${activeFilter === filter.key
+                        ? 'border-2 border-pencil bg-white text-correction shadow-sketchSm'
+                        : 'text-pencil/70 hover:bg-white'
                         }`}
+                    style={{ borderRadius: '18px 8px 16px 10px / 10px 18px 8px 16px' }}
                 >
                     {filter.name}
                 </button>
@@ -84,33 +85,42 @@ const HomePage = () => {
 
     const renderSkeleton = () => (
         Array.from({ length: 10 }).map((_, index) => (
-            <div key={index} className="rounded-xl overflow-hidden animate-pulse">
-                <div className="aspect-[2/3] bg-slate-200"></div>
+            <div key={index} className="animate-pulse overflow-hidden border-[3px] border-pencil bg-white shadow-paper" style={{ borderRadius: '34px 12px 30px 16px / 16px 32px 12px 28px' }}>
+                <div className="aspect-[2/3] bg-erased"></div>
                 <div className="mt-2">
-                    <div className="h-4 bg-slate-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+                    <div className="mb-2 ml-3 h-4 w-3/4 bg-erased"></div>
+                    <div className="mb-4 ml-3 h-3 w-1/2 bg-erased"></div>
                 </div>
             </div>
         ))
     );
 
     return (
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+        <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+            <section className="relative mb-10">
+                <div className="absolute -right-2 top-2 hidden h-20 w-20 animate-floaty rounded-wobbly border-[3px] border-dashed border-correction bg-postit md:block" />
+                <p className="mb-3 inline-block -rotate-2 border-2 border-pencil bg-postit px-3 py-1 text-lg font-bold shadow-sketchSm">library desk</p>
+                <h1 className="max-w-3xl text-5xl leading-tight md:text-6xl">
+                    挑一本故事，像翻开桌上的手稿。
+                </h1>
+                <div className="mt-4 h-4 max-w-xl border-b-[3px] border-dashed border-pencil" />
+            </section>
+
+            <div className="mb-10 flex flex-col items-stretch justify-between gap-5 md:flex-row md:items-center">
                 <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
                 <FilterButtons activeFilter={fileTypeFilter} setFilter={setFileTypeFilter} />
             </div>
 
-            {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">{error}</div>}
+            {error && <div className="mb-8 border-[3px] border-correction bg-white px-4 py-3 text-xl text-correction shadow-sketch" style={{ borderRadius: '22px 10px 20px 12px / 12px 22px 10px 20px' }}>{error}</div>}
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-6 gap-y-8">
+            <div className="grid grid-cols-2 gap-x-5 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 {loading ? renderSkeleton() : (
                     filteredNovels.length > 0 ? (
                         filteredNovels.map((novel) => (
                             <NovelCard key={novel._id} novel={novel} />
                         ))
                     ) : (
-                        <p className="text-slate-500 col-span-full text-center py-10">没有找到符合条件的小说。</p>
+                        <p className="sketch-card col-span-full py-10 text-center text-2xl text-pencil/70">没有找到符合条件的小说。</p>
                     )
                 )}
             </div>

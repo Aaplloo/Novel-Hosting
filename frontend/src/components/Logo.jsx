@@ -2,18 +2,12 @@ import React from 'react';
 
 const Logo = () => {
   return (
-    <svg height="32" viewBox="0 0 160 32">
-      <text
-        x="0"
-        y="25"
-        fontFamily="Inter, sans-serif"
-        fontSize="24"
-        fontWeight="bold"
-        fill="#1E293B"
-      >
+    <div className="-rotate-1">
+      <div className="font-marker text-2xl font-bold leading-none text-pencil md:text-3xl">
         杀都故事会
-      </text>
-    </svg>
+      </div>
+      <div className="mt-1 h-1 w-full rotate-[-1deg] border-b-2 border-dashed border-correction" />
+    </div>
   );
 };
 

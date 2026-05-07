@@ -126,7 +126,7 @@ const NovelPage = () => {
 
         if (novel.fileType === 'pdf') {
             return (
-                <div className="w-full h-screen rounded-xl overflow-hidden shadow-lg">
+                <div className="h-screen w-full overflow-hidden border-[3px] border-pencil bg-white shadow-sketch" style={{ borderRadius: '42px 16px 38px 18px / 18px 40px 16px 36px' }}>
                     <iframe
                         src={pdfUrl}
                         title={novel.title}
@@ -138,7 +138,7 @@ const NovelPage = () => {
 
         if (novel.fileType === 'md') {
             return (
-                <article className="prose lg:prose-xl max-w-none bg-white p-8 sm:p-12 rounded-xl shadow-md">
+                <article className="prose prose-lg max-w-none border-[3px] border-pencil bg-white p-6 shadow-sketch prose-headings:font-marker prose-headings:text-pencil prose-p:text-pencil prose-strong:text-pencil sm:p-10 lg:prose-xl" style={{ borderRadius: '42px 16px 38px 18px / 18px 40px 16px 36px' }}>
                     {paragraphs.map((paragraph, index) => {
                         const paraComments = getParagraphComments(index);
                         const commentCount = paraComments.length;
@@ -146,29 +146,29 @@ const NovelPage = () => {
                         return (
                             <div
                                 key={index}
-                                className="group relative mb-4 transition-colors duration-200 hover:bg-slate-50 rounded px-2 -mx-2 cursor-pointer pb-2"
+                                className="group relative -mx-2 mb-4 cursor-pointer px-2 pb-2 transition-colors duration-100 hover:bg-postit/60"
+                                style={{ borderRadius: '18px 10px 16px 12px / 12px 18px 10px 16px' }}
                                 onClick={() => handleParagraphClick(index)}
                             >
                                 <ReactMarkdown components={{ p: 'span' }}>{paragraph}</ReactMarkdown>
 
-                                {/* Comment Badge & Icon */}
-                                <div className="absolute right-0 top-1/2 -translate-y-1/2 transform translate-x-full pl-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
+                                <div className="absolute right-0 top-1/2 hidden -translate-y-1/2 translate-x-full items-center pl-2 opacity-0 transition-opacity group-hover:opacity-100 md:flex">
                                     <button
-                                        className="p-1.5 bg-white border border-slate-200 shadow-sm rounded-full text-slate-400 hover:text-sky-500 hover:border-sky-300 transition-all flex items-center space-x-1"
+                                        className="flex items-center gap-1 border-2 border-pencil bg-white p-2 text-pencil shadow-sketchSm transition-all hover:bg-correction hover:text-white"
+                                        style={{ borderRadius: '255px 15px 225px 15px / 15px 225px 15px 255px' }}
                                         title="添加/查看评论"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                                         </svg>
                                         {commentCount > 0 && (
-                                            <span className="text-xs font-bold text-sky-500 pr-1">{commentCount}</span>
+                                            <span className="pr-1 text-sm font-bold">{commentCount}</span>
                                         )}
                                     </button>
                                 </div>
 
-                                {/* Inline Badge (Always visible if comments exist) */}
                                 {commentCount > 0 && (
-                                    <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-sky-100 text-sky-800 align-middle">
+                                    <span className="ml-2 inline-flex items-center border-2 border-pencil bg-postit px-2 py-0.5 align-middle text-sm font-bold text-pencil shadow-sketchSm" style={{ borderRadius: '18px 8px 16px 10px / 10px 18px 8px 16px' }}>
                                         {commentCount}
                                     </span>
                                 )}
@@ -184,44 +184,47 @@ const NovelPage = () => {
 
     if (loading) {
         return (
-            <div className="max-w-4xl mx-auto py-12 animate-pulse">
-                <div className="h-10 bg-slate-200 rounded w-3/4 mb-4"></div>
+            <div className="mx-auto max-w-4xl animate-pulse px-4 py-12">
+                <div className="mb-4 h-10 w-3/4 bg-erased"></div>
                 <div className="space-y-4 mt-8">
-                    <div className="h-4 bg-slate-200 rounded w-full"></div>
-                    <div className="h-4 bg-slate-200 rounded w-full"></div>
-                    <div className="h-4 bg-slate-200 rounded w-5/6"></div>
-                    <div className="h-4 bg-slate-200 rounded w-full"></div>
-                    <div className="h-4 bg-slate-200 rounded w-4/6"></div>
+                    <div className="h-4 w-full bg-erased"></div>
+                    <div className="h-4 w-full bg-erased"></div>
+                    <div className="h-4 w-5/6 bg-erased"></div>
+                    <div className="h-4 w-full bg-erased"></div>
+                    <div className="h-4 w-4/6 bg-erased"></div>
                 </div>
             </div>
         );
     }
 
     if (error) {
-        return <div className="text-center py-10">
-            <p className="text-red-500 mb-4">{error}</p>
+        return <div className="px-4 py-10 text-center">
+            <p className="mb-6 text-2xl text-correction">{error}</p>
 
             {error === 'Please login to view content' ? (
-                <Link to="/login" className="bg-sky-500 text-white px-6 py-2 rounded hover:bg-sky-600 transition">去登录</Link>
+                <Link to="/login" className="sketch-button">去登录</Link>
             ) : (
-                <Link to="/" className="mt-4 inline-block text-sky-500 hover:underline">返回首页</Link>
+                <Link to="/" className="sketch-link mt-4 inline-block text-xl font-bold">返回首页</Link>
             )}
         </div>;
     }
 
     return (
-        <main className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <main className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
             {novel && (
-                <div className="text-center mb-8">
+                <div className="mb-10 text-center">
                     {novel.coverImage && (
-                        <img
-                            src={`https://novel-hosting.onrender.com/${novel.coverImage}`}
-                            alt={novel.title}
-                            className="mx-auto h-64 object-cover rounded-lg shadow-lg mb-6"
-                        />
+                        <div className="mx-auto mb-6 w-fit rotate-1 border-[3px] border-pencil bg-white p-2 shadow-sketch">
+                            <img
+                                src={`https://novel-hosting.onrender.com/${novel.coverImage}`}
+                                alt={novel.title}
+                                className="h-64 object-cover"
+                                style={{ borderRadius: '24px 10px 20px 12px / 12px 24px 10px 20px' }}
+                            />
+                        </div>
                     )}
-                    <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">{novel.title}</h1>
-                    <p className="mt-4 text-lg text-slate-500">作者: {novel.author.name}</p>
+                    <h1 className="text-5xl leading-tight sm:text-6xl">{novel.title}</h1>
+                    <p className="mt-4 text-2xl text-pencil/70">作者: {novel.author.name}</p>
                 </div>
             )}
             {renderContent()}

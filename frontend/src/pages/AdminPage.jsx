@@ -112,20 +112,24 @@ const AdminPage = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-        {/* Upload Section */}
+    <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
+      <div className="mb-10">
+        <p className="mb-3 inline-block rotate-1 border-2 border-pencil bg-postit px-3 py-1 text-lg font-bold shadow-sketchSm">admin clipboard</p>
+        <h1 className="text-5xl leading-tight md:text-6xl">整理故事档案</h1>
+      </div>
+
+      <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
         <div>
-          <h2 className="text-3xl font-bold text-slate-900 mb-8">
+          <h2 className="mb-8 text-4xl">
             上传新小说
           </h2>
-          <form className="space-y-6 bg-white p-8 rounded-xl shadow-md" onSubmit={onSubmit}>
-            {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center">{error}</div>}
-            {success && <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-center">{success}</div>}
+          <form className="sketch-panel space-y-6 bg-white p-6 md:p-8" onSubmit={onSubmit}>
+            {error && <div className="border-[3px] border-correction bg-white px-4 py-3 text-center text-lg text-correction shadow-sketchSm" style={{ borderRadius: '18px 10px 16px 12px / 12px 18px 10px 16px' }}>{error}</div>}
+            {success && <div className="border-[3px] border-ballpoint bg-postit px-4 py-3 text-center text-lg text-pencil shadow-sketchSm" style={{ borderRadius: '18px 10px 16px 12px / 12px 18px 10px 16px' }}>{success}</div>}
 
             <div className="space-y-4">
               <div>
-                <label htmlFor="title" className="block text-sm font-medium text-slate-700">
+                <label htmlFor="title" className="block text-lg font-bold text-pencil">
                   小说标题
                 </label>
                 <input
@@ -133,7 +137,7 @@ const AdminPage = () => {
                   name="title"
                   type="text"
                   required
-                  className="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-sky-400 focus:border-sky-400 sm:text-sm"
+                  className="sketch-input mt-1"
                   placeholder="请输入小说标题"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -141,11 +145,11 @@ const AdminPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700">小说文件</label>
-                <div className="mt-1 flex items-center justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-md">
+                <label className="block text-lg font-bold text-pencil">小说文件</label>
+                <div className="sketch-dashed-box mt-1 flex items-center justify-center px-6 pb-6 pt-5">
                   <div className="space-y-1 text-center">
-                    <div className="text-sm text-slate-600">
-                      <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-sky-500 hover:text-sky-400">
+                    <div className="text-lg text-pencil/70">
+                      <label htmlFor="file-upload" className="sketch-link relative cursor-pointer bg-white px-2 font-bold">
                         <span>{fileName}</span>
                         <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={onFileChange} accept=".md,.pdf" />
                       </label>
@@ -155,11 +159,11 @@ const AdminPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700">封面图片 (可选)</label>
-                <div className="mt-1 flex items-center justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-md">
+                <label className="block text-lg font-bold text-pencil">封面图片 (可选)</label>
+                <div className="sketch-dashed-box mt-1 flex items-center justify-center px-6 pb-6 pt-5">
                   <div className="space-y-1 text-center">
-                    <div className="text-sm text-slate-600">
-                      <label htmlFor="cover-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-sky-500 hover:text-sky-400">
+                    <div className="text-lg text-pencil/70">
+                      <label htmlFor="cover-upload" className="sketch-link relative cursor-pointer bg-white px-2 font-bold">
                         <span>{coverName}</span>
                         <input id="cover-upload" name="cover-upload" type="file" className="sr-only" onChange={onCoverChange} accept=".jpg,.jpeg,.png" />
                       </label>
@@ -172,33 +176,32 @@ const AdminPage = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-sky-400 to-blue-400 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-400 disabled:opacity-50"
+              className="sketch-button w-full"
             >
               {loading ? '正在上传...' : '确认上传'}
             </button>
           </form>
         </div>
 
-        {/* Management Section */}
         <div>
-          <h2 className="text-3xl font-bold text-slate-900 mb-8">
+          <h2 className="mb-8 text-4xl">
             现有小说管理
           </h2>
           {listLoading ? (
-            <p>加载中...</p>
+            <p className="text-2xl text-pencil/70">加载中...</p>
           ) : (
             <div className="space-y-4">
               {novels.map((novel) => (
-                <div key={novel._id} className="bg-white p-4 rounded-xl shadow-md flex items-start space-x-4">
-                  <div className="flex-shrink-0 w-20 h-28 bg-slate-200 rounded overflow-hidden">
+                <div key={novel._id} className="sketch-card flex items-start gap-4 p-4 odd:-rotate-1 even:rotate-1">
+                  <div className="h-28 w-20 flex-shrink-0 overflow-hidden border-2 border-pencil bg-erased" style={{ borderRadius: '18px 8px 16px 10px / 10px 18px 8px 16px' }}>
                     <img src={`https://novel-hosting.onrender.com/${novel.coverImage}`} alt={novel.title} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-lg font-medium text-slate-900 truncate">{novel.title}</p>
-                    <p className="text-sm text-slate-500 truncate">作者: {novel.author?.name || 'Unknown'}</p>
+                    <p className="truncate font-marker text-2xl font-bold text-pencil">{novel.title}</p>
+                    <p className="truncate text-lg text-pencil/70">作者: {novel.author?.name || 'Unknown'}</p>
 
                     <div className="mt-3">
-                      <label className="text-xs text-sky-500 hover:text-sky-400 cursor-pointer">
+                      <label className="sketch-link cursor-pointer text-base font-bold">
                         更换封面
                         <input
                           type="file"
@@ -207,14 +210,14 @@ const AdminPage = () => {
                           onChange={(e) => handleUpdateCover(novel._id, e.target.files[0])}
                         />
                       </label>
-                      <button onClick={() => handleDelete(novel._id)} className="ml-4 text-xs text-red-600 hover:text-red-500">
+                      <button onClick={() => handleDelete(novel._id)} className="ml-4 text-base font-bold text-correction hover:line-through">
                         删除小说
                       </button>
                     </div>
                   </div>
                 </div>
               ))}
-              {novels.length === 0 && <p className="text-slate-500">暂无小说。</p>}
+              {novels.length === 0 && <p className="text-2xl text-pencil/70">暂无小说。</p>}
             </div>
           )}
         </div>
