@@ -23,6 +23,16 @@ const getDirectoryPath = (filePath = '') => {
     return slashIndex === -1 ? '' : normalizedPath.slice(0, slashIndex + 1);
 };
 
+const normalizeMarkdownImagePaths = (markdown = '') => (
+    markdown.replace(/(!\[[^\]]*]\()([^)\n]+)(\))/g, (match, prefix, src, suffix) => {
+        if (/^(https?:|data:|blob:)/i.test(src)) {
+            return match;
+        }
+
+        return `${prefix}${normalizePath(src)}${suffix}`;
+    })
+);
+
 const NovelPage = () => {
     const { novelId } = useParams();
     const { isAuthenticated, user, loading: authLoading } = useContext(AuthContext);
@@ -96,7 +106,7 @@ const NovelPage = () => {
         if (content) {
             // Split by double newline (standard markdown paragraph break) or single newline if prefer line-by-line
             // Using logic: split by newline, filter empty lines
-            const parsed = content.split('\n').filter(line => line.trim() !== '');
+            const parsed = normalizeMarkdownImagePaths(content).split('\n').filter(line => line.trim() !== '');
             setParagraphs(parsed);
         }
     }, [content]);
